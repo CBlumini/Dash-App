@@ -68,7 +68,7 @@ dash_columns = ["Bib", "Name", "Age", "Gender", "City", "Swim", "T1", "Bike", "T
 app.layout = html.Div(style={'backgroundColor': colors['background']},
                       children=[
                           html.H1(
-                              children='Welcome to Triathalon Data Analyzer',
+                              children='Welcome to the Triathlon Data Analyzer',
                               style={
                                   'textAlign': 'center',
                                   'color': colors['text']
