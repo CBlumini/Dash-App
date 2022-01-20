@@ -75,7 +75,7 @@ app.layout = html.Div(style={'backgroundColor': colors['background']},
                               }),
 
                           html.Div(
-                              children='This app allows for performance plotting of certain local bay area triathalons.',
+                              children='This app allows for performance plotting of certain local bay area triathlons.',
                               style={
                                   'textAlign': 'center',
                                   'color': colors['text']
@@ -212,7 +212,7 @@ def update_figure_scat(places):
                                            dimensions=dimensions))
 
     para_cor.update_layout(
-        title="Triathalon Results",
+        title="Triathlon Results",
         height=1080,
         plot_bgcolor=colors['background'],
         paper_bgcolor=colors['background'],
