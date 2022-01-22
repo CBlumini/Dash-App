@@ -11,6 +11,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from dash import dash_table
 from dash.dependencies import Input, Output
+import dash_bootstrap_components as dbc
 from convert_time import convertTime
 
 # stop pandas from issuing ceratain warnings
@@ -18,7 +19,7 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
 server = app.server
 
 # set some colors
@@ -65,95 +66,90 @@ dash_columns = ["Bib", "Name", "Age", "Gender", "City", "Swim", "T1", "Bike", "T
                 "Gender Place"]
 
 # layout the page
-app.layout = html.Div(style={'backgroundColor': colors['background']},
-                      children=[
-                          html.H1(
-                              children='Welcome to the Triathlon Data Analyzer',
-                              style={
-                                  'textAlign': 'center',
-                                  'color': colors['text']
-                              }),
+app.layout = html.Div([
+    dbc.Container([
+        dbc.Row([
+            dbc.Col(html.H1('Welcome to the Triathlon Data Analyzer'))
+        ]),
+        dbc.Row([
+            dbc.Col(html.H6(children='This app allows for performance plotting of certain local bay area triathlons.'))
+        ]),                            
+        dash_table.DataTable(
+            id='table-sorting-filtering',
+            columns=[{'name': i, 'id': i} for i in dash_columns],
+            data=time_df.to_dict('records'),
+            style_table={'overflowX': 'auto'},
+            style_header={
+                'backgroundColor': 'rgb(30, 30, 30)',
+                'color': 'white'
+            },
+            style_cell={
+                'height': '90',
+                # 'minWidth': '110%',
+                'minWidth': '60px', 'width': '100px', 'maxWidth': '140px',
+                'whiteSpace': 'normal', 'textAlign': 'center',
+                'backgroundColor': 'rgb(50, 50, 50)',
+                'color': 'white'},
+            style_cell_conditional=[{
+                'if': {'column_id': 'Name'},
+                'textAlign': 'center'
+            }],
+            page_current=0,
+            page_size=15,
+            filter_action='native',
+            filter_query='',
+            sort_action='native',
+            sort_mode='single',
+            sort_by=[],
+            style_as_list_view=True,
+            hidden_columns=[],
+        ),
 
-                          html.Div(
-                              children='This app allows for performance plotting of certain local bay area triathlons.',
-                              style={
-                                  'textAlign': 'center',
-                                  'color': colors['text']
-                              }),
+        dcc.Graph(
+            id='graph-with-slider',
+            # figure=scat
+        ),
 
-                          html.Div(dash_table.DataTable(
-                              id='table-sorting-filtering',
-                              columns=[{'name': i, 'id': i} for i in dash_columns],
-                              data=time_df.to_dict('records'),
-                              style_table={'overflowX': 'auto'},
-                              style_header={
-                                  'backgroundColor': 'rgb(30, 30, 30)',
-                                  'color': 'white'
-                              },
-                              style_cell={
-                                  'height': '90',
-                                  # 'minWidth': '110%',
-                                  'minWidth': '60px', 'width': '100px', 'maxWidth': '140px',
-                                  'whiteSpace': 'normal', 'textAlign': 'center',
-                                  'backgroundColor': 'rgb(50, 50, 50)',
-                                  'color': 'white'},
-                              style_cell_conditional=[{
-                                  'if': {'column_id': 'Name'},
-                                  'textAlign': 'center'
-                              }],
-                              page_current=0,
-                              page_size=15,
-                              filter_action='native',
-                              filter_query='',
-                              sort_action='native',
-                              sort_mode='single',
-                              sort_by=[],
-                              style_as_list_view=True,
-                              hidden_columns=[],
-                          )),
+        dcc.Slider(
+            id='scat-place-slider',
+            min=reduced2['Gender Place'].min(),
+            max=200,
+            value=reduced2['Gender Place'].min(),
+            # marks={str(year): str(year) for year in reduced2['Gender Place'].unique()},
+            step=None,
+            marks={
+                10: '10',
+                25: '25',
+                50: '50',
+                100: '100',
+                200: '200'
+            }
+        ),
 
-                          dcc.Graph(
-                              id='graph-with-slider',
-                              # figure=scat
-                          ),
+        dcc.Graph(
+            id='par-with-slider',
+            # figure=para_cor
+        ),
 
-                          dcc.Slider(
-                              id='scat-place-slider',
-                              min=reduced2['Gender Place'].min(),
-                              max=200,
-                              value=reduced2['Gender Place'].min(),
-                              # marks={str(year): str(year) for year in reduced2['Gender Place'].unique()},
-                              step=None,
-                              marks={
-                                  10: '10',
-                                  25: '25',
-                                  50: '50',
-                                  100: '100',
-                                  200: '200'
-                              }
-                          ),
-
-                          dcc.Graph(
-                              id='par-with-slider',
-                              # figure=para_cor
-                          ),
-
-                          dcc.Slider(
-                              id='par-place-slider',
-                              min=reduced2['Gender Place'].min(),
-                              max=200,
-                              value=reduced2['Gender Place'].min(),
-                              # marks={str(year): str(year) for year in reduced2['Gender Place'].unique()},
-                              step=None,
-                              marks={
-                                  10: '10',
-                                  25: '25',
-                                  50: '50',
-                                  100: '100',
-                                  200: '200'
-                              }
-                          ),
-                      ])
+        dcc.Slider(
+            id='par-place-slider',
+            min=reduced2['Gender Place'].min(),
+            max=200,
+            value=reduced2['Gender Place'].min(),
+            # marks={str(year): str(year) for year in reduced2['Gender Place'].unique()},
+            step=None,
+            marks={
+                10: '10',
+                25: '25',
+                50: '50',
+                100: '100',
+                200: '200'
+            }
+        ),
+                      
+    ])
+])
+        
 
 
 @app.callback(
