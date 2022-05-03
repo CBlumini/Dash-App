@@ -73,7 +73,10 @@ app.layout = html.Div([
         ]),
         dbc.Row([
             dbc.Col(html.H6(children='This app allows for performance plotting of certain local bay area triathlons.'))
-        ]),                            
+        ]),
+        dbc.Row([
+            dbc.Col(html.H6(children='This is a work in progress'))
+        ]),
         dash_table.DataTable(
             id='table-sorting-filtering',
             columns=[{'name': i, 'id': i} for i in dash_columns],
