@@ -34,6 +34,7 @@ colors = {
 
 # ingest data
 data = pd.read_csv('https://github.com/CBlumini/heroku_dep_2/raw/main/Santa-Cruz-Sprint.csv', header=0, index_col=None)
+data = data[data['Age'] > 1]
 #females = data[data['Gender'] == 'F']
 females = data
 
@@ -109,7 +110,7 @@ app.layout = html.Div([
                 html.P("Names:"),
                 dcc.Dropdown(id='names',
                              options=['Age Group', 'Gender'],
-                             value='Gender',
+                             value='Age Group',
                              clearable=False
                              ),
 

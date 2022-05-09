@@ -21,12 +21,15 @@ def create_time_columns(bare_frame):
 
     return bare_frame
 
-start_ages = []
-end_ages =[]
-for start in range(20, 85, 5):
-    start_ages.append(start)
-for end in range (24, 89, 5):
-    end_ages.append(end)
+# start_ages = []
+# end_ages =[]
+# for start in range(20, 85, 5):
+#     start_ages.append(start)
+# for end in range (24, 89, 5):
+#     end_ages.append(end)
+
+start_ages = [10, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85]
+end_ages = [17, 19, 24, 29, 34, 39, 44, 49, 54, 59, 64, 69, 74, 79, 84, 100]
 
 def determine_agegroup(row):
     age = int(row['Age'])
