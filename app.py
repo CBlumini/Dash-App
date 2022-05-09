@@ -1,7 +1,9 @@
 # this might help me break the project up
 # https://www.purfe.com/dash-project-structure-multi-tab-app-with-callbacks-in-different-files/
 
-# add a pie chart to show size of each age group and male/female distribution
+# https://dash-bootstrap-components.opensource.faculty.ai/docs/components/layout/
+
+
 
 from dash.development.base_component import Component
 import pandas as pd
@@ -32,24 +34,11 @@ colors = {
 
 # ingest data
 data = pd.read_csv('https://github.com/CBlumini/heroku_dep_2/raw/main/Santa-Cruz-Sprint.csv', header=0, index_col=None)
-females = data[data['Gender'] == 'F']
+#females = data[data['Gender'] == 'F']
+females = data
 
-# get sizes for age groups
-start_ages = []
-end_ages =[]
-for start in range(20, 85, 5):
-    start_ages.append(start)
-for end in range (24, 89, 5):
-    end_ages.append(end)
-
-group_sizes = []
-for start, stop in zip(start_ages, end_ages):
-    group_sizes.append(data[(data['Age'] <= stop) & (data['Age'] >= start)]['Age'].count())
-
-ages = ['20-24', '25-29', '30-34', '35-39', '40-44', '45-49', '50-54', '55-59', '60-64', '65-69', '70-74', '75-79', '80-84',]
-
-zipped = zip(ages, group_sizes)
-piedf = pd.DataFrame(zipped, columns=['Age Range', 'Athletes'])
+datapie = data
+datapie['Age Group'] = datapie.apply(determine_agegroup, axis=1)
 
 # the data does not come in the right form to do math on it. So convert the times to minutes and decimal seconds
 # maybe setup a compute file to do this by itself later
@@ -70,14 +59,15 @@ app.layout = html.Div([
     dbc.Container([
         dbc.Row([
             dbc.Col(html.H1('Welcome to the Triathlon Data Analyzer'))
-        ]),
+    ]),
         dbc.Row([
             dbc.Col(html.H6(children='This app allows for performance plotting of certain local bay area triathlons.'))
-        ]),
+    ]),
         dbc.Row([
             dbc.Col(html.H6(children='This is a work in progress'
                                      ' Now with case-INSENSITIVE searching'))
-        ]),
+    ]),
+        dbc.Row([
         dash_table.DataTable(
             id='table-sorting-filtering',
             columns=[{'name': i, 'id': i} for i in dash_columns],
@@ -109,44 +99,51 @@ app.layout = html.Div([
             style_as_list_view=True,
             hidden_columns=[],
         ),
+    ]),
+        dbc.Row([
+            dbc.Col([
+                html.H5("Gender Distribution"),
 
-        dcc.Graph(id='pie-chart'),
+                dcc.Graph(id='pie-chart'),
 
-        html.P("Names:"),
-        dcc.Dropdown(id='names',
-                     options=['Age Range', 'Gender'],
-                     value='Gender',
-                     clearable=False
-                     ),
+                html.P("Names:"),
+                dcc.Dropdown(id='names',
+                             options=['Age Group', 'Gender'],
+                             value='Gender',
+                             clearable=False
+                             ),
 
-        html.P("Names:"),
-        dcc.Dropdown(id='names',
-                     options=['Age Range', 'Gender'],
-                     value='Gender',
-                     clearable=False
-                     ),
+                html.P("Values:"),
+                dcc.Dropdown(id='values',
+                             options=['Age Place'],
+                             value='Age Place',
+                             clearable=False
+                             ),
+            ]),
+            dbc.Col([
+                html.H5('Age vs Finish for both Genders'),
 
+                dcc.Graph(
+                    id='graph-with-slider',
+                    # figure=scat
+                ),
 
-        dcc.Graph(
-            id='graph-with-slider',
-            # figure=scat
-        ),
-
-        dcc.Slider(
-            id='scat-place-slider',
-            min=reduced2['Gender Place'].min(),
-            max=200,
-            value=reduced2['Gender Place'].min(),
-            # marks={str(year): str(year) for year in reduced2['Gender Place'].unique()},
-            step=None,
-            marks={
-                10: '10',
-                25: '25',
-                50: '50',
-                100: '100',
-                200: '200'
-            }
-        ),
+                dcc.Slider(
+                    id='scat-place-slider',
+                    min=reduced2['Gender Place'].min(),
+                    max=200,
+                    value=reduced2['Gender Place'].min(),
+                    # marks={str(year): str(year) for year in reduced2['Gender Place'].unique()},
+                    step=None,
+                    marks={
+                        10: '10',
+                        25: '25',
+                        50: '50',
+                        100: '100',
+                        200: '200'}
+                ),
+            ]),
+        ]),
 
         dcc.Graph(
             id='par-with-slider',
@@ -174,9 +171,10 @@ app.layout = html.Div([
         
 @app.callback(
     Output('pie-chart', 'figure'),
-    Input('names', 'value'))
-def update_figure_pie(names):
-    fig = px.pie(piedf, values=names)
+    Input('names', 'value'),
+    Input('values', 'value'))
+def update_figure_pie(names, values):
+    fig = px.pie(datapie, values=values, names=names)
     return fig
 
 

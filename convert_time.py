@@ -20,3 +20,16 @@ def create_time_columns(bare_frame):
     bare_frame["Total"] = round(bare_frame["Plus T2"] + bare_frame["Run Minutes"], 2)
 
     return bare_frame
+
+start_ages = []
+end_ages =[]
+for start in range(20, 85, 5):
+    start_ages.append(start)
+for end in range (24, 89, 5):
+    end_ages.append(end)
+
+def determine_agegroup(row):
+    age = int(row['Age'])
+    for start, stop in zip(start_ages, end_ages):
+        if start<=age<=stop:
+            return '%d-%d' %(start, stop)
