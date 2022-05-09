@@ -1,6 +1,8 @@
 # this might help me break the project up
 # https://www.purfe.com/dash-project-structure-multi-tab-app-with-callbacks-in-different-files/
 
+# add a pie chart to show size of each age group and male/female distribution
+
 from dash.development.base_component import Component
 import pandas as pd
 import dash
@@ -12,12 +14,12 @@ import plotly.graph_objects as go
 from dash import dash_table
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
-from convert_time import convertTime
+from convert_time import *
 
 # stop pandas from issuing ceratain warnings
 pd.options.mode.chained_assignment = None  # default='warn'
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+#external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
 server = app.server
@@ -32,27 +34,25 @@ colors = {
 data = pd.read_csv('https://github.com/CBlumini/heroku_dep_2/raw/main/Santa-Cruz-Sprint.csv', header=0, index_col=None)
 females = data[data['Gender'] == 'F']
 
+# get sizes for age groups
+start_ages = []
+end_ages =[]
+for start in range(20, 85, 5):
+    start_ages.append(start)
+for end in range (24, 89, 5):
+    end_ages.append(end)
+
+group_sizes = []
+for start, stop in zip(start_ages, end_ages):
+    group_sizes.append(data[(data['Age'] <= stop) & (data['Age'] >= start)]['Age'].count())
+
+ages = ['20-24', '25-29', '30-34', '35-39', '40-44', '45-49', '50-54', '55-59', '60-64', '65-69', '70-74', '75-79', '80-84',]
+
+zipped = zip(ages, group_sizes)
+piedf = pd.DataFrame(zipped, columns=['Age Range', 'Athletes'])
 
 # the data does not come in the right form to do math on it. So convert the times to minutes and decimal seconds
 # maybe setup a compute file to do this by itself later
-def create_time_columns(bare_frame):
-
-    # convert to integers
-    bare_frame["Swim Minutes"] = bare_frame["Swim"].apply(convertTime)
-    bare_frame["T1 Minutes"] = bare_frame["T1"].apply(convertTime)
-    bare_frame["Bike Minutes"] = bare_frame["Bike"].apply(convertTime)
-    bare_frame["T2 Minutes"] = bare_frame["T2"].apply(convertTime)
-    bare_frame["Run Minutes"] = bare_frame["Run"].apply(convertTime)
-    # bare_frame["Elapsed Minutes"] = bare_frame["Chip Elapsed"].apply(convert_time)
-
-    # create cumulative times
-    bare_frame["Swim+T1"] = round(bare_frame["Swim Minutes"] + bare_frame["T1 Minutes"], 2)
-    bare_frame["Plus Bike"] = round(bare_frame["Swim+T1"] + bare_frame["Bike Minutes"], 2)
-    bare_frame["Plus T2"] = round(bare_frame["Plus Bike"] + bare_frame["T2 Minutes"], 2)
-    bare_frame["Total"] = round(bare_frame["Plus T2"] + bare_frame["Run Minutes"], 2)
-
-    return bare_frame
-
 
 time_df = create_time_columns(females)
 
@@ -75,7 +75,8 @@ app.layout = html.Div([
             dbc.Col(html.H6(children='This app allows for performance plotting of certain local bay area triathlons.'))
         ]),
         dbc.Row([
-            dbc.Col(html.H6(children='This is a work in progress'))
+            dbc.Col(html.H6(children='This is a work in progress'
+                                     ' Now with case-INSENSITIVE searching'))
         ]),
         dash_table.DataTable(
             id='table-sorting-filtering',
@@ -91,7 +92,7 @@ app.layout = html.Div([
                 # 'minWidth': '110%',
                 'minWidth': '60px', 'width': '100px', 'maxWidth': '140px',
                 'whiteSpace': 'normal', 'textAlign': 'center',
-                'backgroundColor': 'rgb(50, 50, 50)',
+                'backgroundColor': 'rgb(0, 0, 0)',
                 'color': 'white'},
             style_cell_conditional=[{
                 'if': {'column_id': 'Name'},
@@ -100,6 +101,7 @@ app.layout = html.Div([
             page_current=0,
             page_size=15,
             filter_action='native',
+            filter_options={'case':'insensitive'},
             filter_query='',
             sort_action='native',
             sort_mode='single',
@@ -107,6 +109,23 @@ app.layout = html.Div([
             style_as_list_view=True,
             hidden_columns=[],
         ),
+
+        dcc.Graph(id='pie-chart'),
+
+        html.P("Names:"),
+        dcc.Dropdown(id='names',
+                     options=['Age Range', 'Gender'],
+                     value='Gender',
+                     clearable=False
+                     ),
+
+        html.P("Names:"),
+        dcc.Dropdown(id='names',
+                     options=['Age Range', 'Gender'],
+                     value='Gender',
+                     clearable=False
+                     ),
+
 
         dcc.Graph(
             id='graph-with-slider',
@@ -153,6 +172,12 @@ app.layout = html.Div([
     ])
 ])
         
+@app.callback(
+    Output('pie-chart', 'figure'),
+    Input('names', 'value'))
+def update_figure_pie(names):
+    fig = px.pie(piedf, values=names)
+    return fig
 
 
 @app.callback(
