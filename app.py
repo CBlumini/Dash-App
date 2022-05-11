@@ -103,7 +103,7 @@ app.layout = html.Div([
     ]),
         dbc.Row([
             dbc.Col([
-                html.H5("Gender Distribution"),
+                html.H5("Age/Gender Distribution"),
 
                 dcc.Graph(id='pie-chart'),
 
