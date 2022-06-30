@@ -1,8 +1,11 @@
 # this might help me break the project up
 # https://www.purfe.com/dash-project-structure-multi-tab-app-with-callbacks-in-different-files/
 
+# https://dash-bootstrap-components.opensource.faculty.ai/docs/components/layout/
+
+
+
 from dash.development.base_component import Component
-import pandas as pd
 import dash
 from dash import dcc
 from dash import html
@@ -12,12 +15,13 @@ import plotly.graph_objects as go
 from dash import dash_table
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
-from convert_time import convertTime
+# from convert_time import *
+from custom_frame import ProcessedData
 
 # stop pandas from issuing ceratain warnings
 pd.options.mode.chained_assignment = None  # default='warn'
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+#external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
 server = app.server
@@ -29,32 +33,20 @@ colors = {
 }
 
 # ingest data
-data = pd.read_csv('https://github.com/CBlumini/heroku_dep_2/raw/main/Santa-Cruz-Sprint.csv', header=0, index_col=None)
-females = data[data['Gender'] == 'F']
+data_inst = ProcessedData(url='https://github.com/CBlumini/heroku_dep_2/raw/main/Santa-Cruz-Sprint.csv')
+data = data_inst.get_cleaned_data()
+
+# get data for the females chart
+females = data_inst.get_cleaned_data()
+males = data_inst.get_gendered_data(gender="Male")
+# get data for the pie chart
+datapie = data_inst.get_piechart_data(data)
 
 
 # the data does not come in the right form to do math on it. So convert the times to minutes and decimal seconds
 # maybe setup a compute file to do this by itself later
-def create_time_columns(bare_frame):
 
-    # convert to integers
-    bare_frame["Swim Minutes"] = bare_frame["Swim"].apply(convertTime)
-    bare_frame["T1 Minutes"] = bare_frame["T1"].apply(convertTime)
-    bare_frame["Bike Minutes"] = bare_frame["Bike"].apply(convertTime)
-    bare_frame["T2 Minutes"] = bare_frame["T2"].apply(convertTime)
-    bare_frame["Run Minutes"] = bare_frame["Run"].apply(convertTime)
-    # bare_frame["Elapsed Minutes"] = bare_frame["Chip Elapsed"].apply(convert_time)
-
-    # create cumulative times
-    bare_frame["Swim+T1"] = round(bare_frame["Swim Minutes"] + bare_frame["T1 Minutes"], 2)
-    bare_frame["Plus Bike"] = round(bare_frame["Swim+T1"] + bare_frame["Bike Minutes"], 2)
-    bare_frame["Plus T2"] = round(bare_frame["Plus Bike"] + bare_frame["T2 Minutes"], 2)
-    bare_frame["Total"] = round(bare_frame["Plus T2"] + bare_frame["Run Minutes"], 2)
-
-    return bare_frame
-
-
-time_df = create_time_columns(females)
+time_df = ProcessedData.get_time_data(females)
 
 reduced2 = time_df[["Name", "Swim Minutes", "Swim+T1", "Plus Bike", "Plus T2", "Total", "Gender Place"]]
 reduced2["Start"] = 0
@@ -70,13 +62,15 @@ app.layout = html.Div([
     dbc.Container([
         dbc.Row([
             dbc.Col(html.H1('Welcome to the Triathlon Data Analyzer'))
-        ]),
+    ]),
         dbc.Row([
             dbc.Col(html.H6(children='This app allows for performance plotting of certain local bay area triathlons.'))
-        ]),
+    ]),
         dbc.Row([
-            dbc.Col(html.H6(children='This is a work in progress'))
-        ]),
+            dbc.Col(html.H6(children='This is a work in progress'
+                                     ' Now with case-INSENSITIVE searching'))
+    ]),
+        dbc.Row([
         dash_table.DataTable(
             id='table-sorting-filtering',
             columns=[{'name': i, 'id': i} for i in dash_columns],
@@ -91,7 +85,7 @@ app.layout = html.Div([
                 # 'minWidth': '110%',
                 'minWidth': '60px', 'width': '100px', 'maxWidth': '140px',
                 'whiteSpace': 'normal', 'textAlign': 'center',
-                'backgroundColor': 'rgb(50, 50, 50)',
+                'backgroundColor': 'rgb(0, 0, 0)',
                 'color': 'white'},
             style_cell_conditional=[{
                 'if': {'column_id': 'Name'},
@@ -100,6 +94,7 @@ app.layout = html.Div([
             page_current=0,
             page_size=15,
             filter_action='native',
+            filter_options={'case':'insensitive'},
             filter_query='',
             sort_action='native',
             sort_mode='single',
@@ -107,27 +102,51 @@ app.layout = html.Div([
             style_as_list_view=True,
             hidden_columns=[],
         ),
+    ]),
+        dbc.Row([
+            dbc.Col([
+                html.H5("Age/Gender Distribution"),
 
-        dcc.Graph(
-            id='graph-with-slider',
-            # figure=scat
-        ),
+                dcc.Graph(id='pie-chart'),
 
-        dcc.Slider(
-            id='scat-place-slider',
-            min=reduced2['Gender Place'].min(),
-            max=200,
-            value=reduced2['Gender Place'].min(),
-            # marks={str(year): str(year) for year in reduced2['Gender Place'].unique()},
-            step=None,
-            marks={
-                10: '10',
-                25: '25',
-                50: '50',
-                100: '100',
-                200: '200'
-            }
-        ),
+                html.P("Names:"),
+                dcc.Dropdown(id='names',
+                             options=['Age Group', 'Gender'],
+                             value='Age Group',
+                             clearable=False
+                             ),
+
+                html.P("Values:"),
+                dcc.Dropdown(id='values',
+                             options=['Age Place'],
+                             value='Age Place',
+                             clearable=False
+                             ),
+            ]),
+            dbc.Col([
+                html.H5('Age vs Finish for both Genders'),
+
+                dcc.Graph(
+                    id='graph-with-slider',
+                    # figure=scat
+                ),
+
+                dcc.Slider(
+                    id='scat-place-slider',
+                    min=reduced2['Gender Place'].min(),
+                    max=200,
+                    value=reduced2['Gender Place'].min(),
+                    # marks={str(year): str(year) for year in reduced2['Gender Place'].unique()},
+                    step=None,
+                    marks={
+                        10: '10',
+                        25: '25',
+                        50: '50',
+                        100: '100',
+                        200: '200'}
+                ),
+            ]),
+        ]),
 
         dcc.Graph(
             id='par-with-slider',
@@ -153,6 +172,13 @@ app.layout = html.Div([
     ])
 ])
         
+@app.callback(
+    Output('pie-chart', 'figure'),
+    Input('names', 'value'),
+    Input('values', 'value'))
+def update_figure_pie(names, values):
+    fig = px.pie(datapie, values=values, names=names)
+    return fig
 
 
 @app.callback(
