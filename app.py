@@ -6,7 +6,6 @@
 
 
 from dash.development.base_component import Component
-import pandas as pd
 import dash
 from dash import dcc
 from dash import html
@@ -17,6 +16,7 @@ from dash import dash_table
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 from convert_time import *
+from custom_frame import ProcessedData
 
 # stop pandas from issuing ceratain warnings
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -33,13 +33,18 @@ colors = {
 }
 
 # ingest data
-data = pd.read_csv('https://github.com/CBlumini/heroku_dep_2/raw/main/Santa-Cruz-Sprint.csv', header=0, index_col=None)
-data = data[data['Age'] > 1]
-#females = data[data['Gender'] == 'F']
-females = data
+# data = pd.read_csv('https://github.com/CBlumini/heroku_dep_2/raw/main/Santa-Cruz-Sprint.csv', header=0, index_col=None)
+# data = data[data['Age'] > 1]
 
-datapie = data
-datapie['Age Group'] = datapie.apply(determine_agegroup, axis=1)
+data_inst = ProcessedData(url='https://github.com/CBlumini/heroku_dep_2/raw/main/Santa-Cruz-Sprint.csv')
+data = data_inst.get_cleaned_data(1)
+
+
+#females = data[data['Gender'] == 'F']
+females = data_inst.get_cleaned_data()
+
+datapie = data_inst.get_piechart_data(data)
+# datapie['Age Group'] = datapie.apply(determine_agegroup, axis=1)
 
 # the data does not come in the right form to do math on it. So convert the times to minutes and decimal seconds
 # maybe setup a compute file to do this by itself later
