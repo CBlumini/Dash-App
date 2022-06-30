@@ -33,18 +33,15 @@ colors = {
 }
 
 # ingest data
-# data = pd.read_csv('https://github.com/CBlumini/heroku_dep_2/raw/main/Santa-Cruz-Sprint.csv', header=0, index_col=None)
-# data = data[data['Age'] > 1]
-
 data_inst = ProcessedData(url='https://github.com/CBlumini/heroku_dep_2/raw/main/Santa-Cruz-Sprint.csv')
 data = data_inst.get_cleaned_data(1)
 
-
-#females = data[data['Gender'] == 'F']
+# get data for the females chart
 females = data_inst.get_cleaned_data()
 
+# get data for the pie chart
 datapie = data_inst.get_piechart_data(data)
-# datapie['Age Group'] = datapie.apply(determine_agegroup, axis=1)
+
 
 # the data does not come in the right form to do math on it. So convert the times to minutes and decimal seconds
 # maybe setup a compute file to do this by itself later
