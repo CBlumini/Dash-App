@@ -15,7 +15,7 @@ import plotly.graph_objects as go
 from dash import dash_table
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
-from convert_time import *
+# from convert_time import *
 from custom_frame import ProcessedData
 
 # stop pandas from issuing ceratain warnings
@@ -46,7 +46,7 @@ datapie = data_inst.get_piechart_data(data)
 # the data does not come in the right form to do math on it. So convert the times to minutes and decimal seconds
 # maybe setup a compute file to do this by itself later
 
-time_df = create_time_columns(females)
+time_df = ProcessedData.get_time_data(females)
 
 reduced2 = time_df[["Name", "Swim Minutes", "Swim+T1", "Plus Bike", "Plus T2", "Total", "Gender Place"]]
 reduced2["Start"] = 0

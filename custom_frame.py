@@ -25,8 +25,15 @@ class ProcessedData:
             if start <= age <= stop:
                 return '%d-%d' % (start, stop)
 
-    @staticmethod
-    def get_piechart_data(df):
+    @classmethod
+    def convertTime(cls, time):
+        temp = time.split(':')
+        timeMinutes = (int(temp[0]) * 60) + int(temp[1]) + int(temp[2]) / 60
+        return timeMinutes
+
+
+
+    def get_piechart_data(self, df):
         datapie = df
         datapie['Age Group'] = datapie.apply(ProcessedData.determine_agegroup, axis=1)
         return datapie
@@ -40,3 +47,21 @@ class ProcessedData:
         self.gendered_data = self.gendered_data[self.gendered_data['Gender'] == gender]
         return self.gendered_data
 
+    @staticmethod
+    def get_time_data(bare_frame):
+
+        # convert to integers
+        bare_frame["Swim Minutes"] = bare_frame["Swim"].apply(ProcessedData.convertTime)
+        bare_frame["T1 Minutes"] = bare_frame["T1"].apply(ProcessedData.convertTime)
+        bare_frame["Bike Minutes"] = bare_frame["Bike"].apply(ProcessedData.convertTime)
+        bare_frame["T2 Minutes"] = bare_frame["T2"].apply(ProcessedData.convertTime)
+        bare_frame["Run Minutes"] = bare_frame["Run"].apply(ProcessedData.convertTime)
+        # bare_frame["Elapsed Minutes"] = bare_frame["Chip Elapsed"].apply(convert_time)
+
+        # create cumulative times
+        bare_frame["Swim+T1"] = round(bare_frame["Swim Minutes"] + bare_frame["T1 Minutes"], 2)
+        bare_frame["Plus Bike"] = round(bare_frame["Swim+T1"] + bare_frame["Bike Minutes"], 2)
+        bare_frame["Plus T2"] = round(bare_frame["Plus Bike"] + bare_frame["T2 Minutes"], 2)
+        bare_frame["Total"] = round(bare_frame["Plus T2"] + bare_frame["Run Minutes"], 2)
+
+        return bare_frame
