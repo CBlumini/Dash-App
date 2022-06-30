@@ -6,9 +6,10 @@ import pandas as pd
 class ProcessedData:
 
 
-    def __init__(self, df=None, url=None):
+    def __init__(self, df=None, url=None, cutoff_year=1):
         self.df = df
         self.url = url
+        self.cutoff_year = cutoff_year
         self.cleaned_data = None
         self.gendered_data = None
 
@@ -38,13 +39,22 @@ class ProcessedData:
         datapie['Age Group'] = datapie.apply(ProcessedData.determine_agegroup, axis=1)
         return datapie
 
-    def get_cleaned_data(self, cuttoff_year=1):
-        self.cleaned_data = self.df[self.df['Age'] > cuttoff_year]
+    def get_cleaned_data(self, cutoff_year=None):
+        if cutoff_year is None:
+            self.cleaned_data = self.df[self.df['Age'] > self.cutoff_year]
+        else:
+            self.cleaned_data = self.df[self.df['Age'] > cutoff_year]
         return self.cleaned_data
 
-    def get_gendered_data(self, gender, cuttoff_year=1):
-        self.gendered_data = self.get_cleaned_data(cuttoff_year)
-        self.gendered_data = self.gendered_data[self.gendered_data['Gender'] == gender]
+    def get_gendered_data(self, gender, cutoff_year=None):
+        """Get a dataset filter to just Males or Females
+        Must specify a string of either 'Male' or 'Female'"""
+        if cutoff_year is None:
+            self.gendered_data = self.get_cleaned_data(self.cutoff_year)
+            self.gendered_data = self.gendered_data[self.gendered_data['Gender'] == gender]
+        else:
+            self.gendered_data = self.get_cleaned_data(cutoff_year)
+            self.gendered_data = self.gendered_data[self.gendered_data['Gender'] == gender]
         return self.gendered_data
 
     @staticmethod

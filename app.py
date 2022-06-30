@@ -34,11 +34,11 @@ colors = {
 
 # ingest data
 data_inst = ProcessedData(url='https://github.com/CBlumini/heroku_dep_2/raw/main/Santa-Cruz-Sprint.csv')
-data = data_inst.get_cleaned_data(1)
+data = data_inst.get_cleaned_data()
 
 # get data for the females chart
 females = data_inst.get_cleaned_data()
-
+males = data_inst.get_gendered_data(gender="Male")
 # get data for the pie chart
 datapie = data_inst.get_piechart_data(data)
 
