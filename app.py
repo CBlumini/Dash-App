@@ -3,9 +3,6 @@
 
 # https://dash-bootstrap-components.opensource.faculty.ai/docs/components/layout/
 
-
-
-from dash.development.base_component import Component
 import dash
 from dash import dcc
 from dash import html
@@ -15,13 +12,10 @@ import plotly.graph_objects as go
 from dash import dash_table
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
-# from convert_time import *
 from custom_frame import ProcessedData
 
 # stop pandas from issuing ceratain warnings
 pd.options.mode.chained_assignment = None  # default='warn'
-
-#external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.LUMEN])
 server = app.server
@@ -42,7 +36,6 @@ males = data_inst.get_gendered_data(gender="Male")
 # get data for the pie chart
 datapie = data_inst.get_piechart_data(data)
 
-
 # the data does not come in the right form to do math on it. So convert the times to minutes and decimal seconds
 # maybe setup a compute file to do this by itself later
 
@@ -57,14 +50,16 @@ dash_columns = ["Bib", "Name", "Age", "Gender", "City", "Swim", "T1", "Bike", "T
                 "Age Place",
                 "Gender Place"]
 
+# create the pie charte
+piefig = px.pie(datapie, values="Age Place", names="Age Group")
+
 # layout the page
 app.layout = html.Div([
     dbc.Container([
         dbc.Row(html.H1('Welcome to the Triathlon Data Analyzer'), justify="center"),
-        dbc.Row(html.H6(children='This app allows for performance plotting of certain local bay area triathlons.')),
-        dbc.Row(html.H6(children='This is a work in progress' ' Now with case-INSENSITIVE searching'))
+        dbc.Row(html.H6(children='This app allows for plotting of certain Bay Area triathlons.')),
     ]),
-        dbc.Row([
+    dbc.Row([
         dash_table.DataTable(
             id='table-sorting-filtering',
             columns=[{'name': i, 'id': i} for i in dash_columns],
@@ -74,7 +69,7 @@ app.layout = html.Div([
                 'height': '90',
                 'minWidth': '60px', 'width': '100px', 'maxWidth': '140px',
                 'whiteSpace': 'normal', 'textAlign': 'center',
-                },
+            },
             style_cell_conditional=[{
                 'if': {'column_id': 'Name'},
                 'textAlign': 'center'
@@ -82,7 +77,7 @@ app.layout = html.Div([
             page_current=0,
             page_size=15,
             filter_action='native',
-            filter_options={'case':'insensitive'},
+            filter_options={'case': 'insensitive'},
             filter_query='',
             sort_action='native',
             sort_mode='single',
@@ -91,56 +86,54 @@ app.layout = html.Div([
             hidden_columns=[],
         ),
     ]),
-        dbc.Row([
-            # Generate the pie chart
-            dbc.Col([
-                html.H5("Age/Gender Distribution"),
-                dcc.Graph(id='pie-chart'),
-                html.P("Names:"),
-                dcc.Dropdown(id='names',
-                             options=['Age Group', 'Gender'],
-                             value='Age Group',
-                             clearable=False),
+    dbc.Row([
+        # Generate the pie chart
+        dbc.Col([
+            html.H5("Age Distribution"),
+            dcc.Graph(figure=piefig),
+            # html.P("Names:"),
+            # dcc.Dropdown(id='names',
+            #              options=['Age Group', 'Gender'],
+            #              value='Age Group', clearable=False),
+            #
+            # html.P("Values:"),
+            # dcc.Dropdown(id='places',
+            #              options=['Age Place'],
+            #              value='Age Place', clearable=False),
+        ]),
+        # Generate the scatter plot
+        dbc.Col([
+            html.H5('Age vs Finish for both Genders'),
+            dcc.Graph(id='graph-with-slider'),
 
-                html.P("Values:"),
-                dcc.Dropdown(id='values',
-                             options=['Age Place'],
-                             value='Age Place',
-                             clearable=False),
-                    ]),
-            # Generate the scatter plot
-            dbc.Col([
-                html.H5('Age vs Finish for both Genders'),
-                dcc.Graph(id='graph-with-slider'),
+            dcc.Slider(
+                id='scat-place-slider',
+                min=reduced2['Gender Place'].min(),
+                max=200,
+                value=reduced2['Gender Place'].min(),
+                step=None,
+                marks={10: '10', 25: '25', 50: '50', 100: '100', 200: '200'}),
+        ]),
+    ]),
+    # Generate the par-coord plot
+    dcc.Graph(id='par-with-slider'),
+    # Generate the slide for the par-coord plot
+    dcc.Slider(
+        id='par-place-slider',
+        min=reduced2['Gender Place'].min(),
+        max=200,
+        value=reduced2['Gender Place'].min(),
+        step=None,
+        marks={10: '10', 25: '25', 50: '50', 100: '100', 200: '200'}
+    ),
 
-                dcc.Slider(
-                    id='scat-place-slider',
-                    min=reduced2['Gender Place'].min(),
-                    max=200,
-                    value=reduced2['Gender Place'].min(),
-                    step=None,
-                    marks={10: '10', 25: '25', 50: '50', 100: '100', 200: '200'}),
-                    ]),
-                ]),
-        # Generate the par-coord plot
-        dcc.Graph(id='par-with-slider'),
-        # Generate the slide for the par-coord plot
-        dcc.Slider(
-            id='par-place-slider',
-            min=reduced2['Gender Place'].min(),
-            max=200,
-            value=reduced2['Gender Place'].min(),
-            step=None,
-            marks={10: '10', 25: '25', 50: '50', 100: '100', 200: '200'}
-                ),
-                      
-    ])
+], style={'padding': '5px 20px 20px 20px'})
 
-        
+
 @app.callback(
     Output('pie-chart', 'figure'),
     Input('names', 'value'),
-    Input('values', 'value'))
+    Input('places', 'value'))
 def update_figure_pie(names, values):
     fig = px.pie(datapie, values=values, names=names)
     return fig
@@ -151,15 +144,7 @@ def update_figure_pie(names, values):
     Input(component_id='scat-place-slider', component_property='value'))
 def update_figure_scat(places):
     filtered_df = females[females['Gender Place'] <= places]
-
-    # create the plots
     scat = px.scatter(filtered_df, x=filtered_df['Age'], y=filtered_df['Gender Place'])
-    scat.update_layout(
-        plot_bgcolor=colors['background'],
-        paper_bgcolor=colors['background'],
-        font_color=colors['text']
-    )
-
     return scat
 
 
@@ -194,19 +179,15 @@ def update_figure_scat(places):
     ])
 
     para_cor = go.Figure(data=go.Parcoords(line=dict(color=reduced3['Gender Place'],
-                                                     colorscale=[[.0, 'rgba(255,0,0,0.1)'], [0.2, 'rgba(0,255,0,0.1)'],
+                                                     colorscale=[[.0, 'rgba(255,0,0,0.1)'],
+                                                                 [0.2, 'rgba(0,255,0,0.1)'],
                                                                  [.4, 'rgba(0,0,255,0.1)'],
                                                                  [.6, 'rgba(0,255,255,0.1)'],
                                                                  [.8, 'rgba(255,0,255,0.1)'],
                                                                  [1, 'rgba(255,255,255,0.1)']]),
                                            dimensions=dimensions))
 
-    para_cor.update_layout(
-        title="Triathlon Results",
-        height=1080,
-        plot_bgcolor=colors['background'],
-        paper_bgcolor=colors['background'],
-        font_color=colors['text'])
+    para_cor.update_layout(title="Triathlon Results", height=1080,)
 
     return para_cor
 
