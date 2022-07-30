@@ -23,7 +23,7 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 #external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.LUMEN])
 server = app.server
 
 # set some colors
@@ -60,15 +60,9 @@ dash_columns = ["Bib", "Name", "Age", "Gender", "City", "Swim", "T1", "Bike", "T
 # layout the page
 app.layout = html.Div([
     dbc.Container([
-        dbc.Row([
-            dbc.Col(html.H1('Welcome to the Triathlon Data Analyzer'))
-    ]),
-        dbc.Row([
-            dbc.Col(html.H6(children='This app allows for performance plotting of certain local bay area triathlons.'))
-    ]),
-        dbc.Row([
-            dbc.Col(html.H6(children='This is a work in progress'
-                                     ' Now with case-INSENSITIVE searching'))
+        dbc.Row(html.H1('Welcome to the Triathlon Data Analyzer'), justify="center"),
+        dbc.Row(html.H6(children='This app allows for performance plotting of certain local bay area triathlons.')),
+        dbc.Row(html.H6(children='This is a work in progress' ' Now with case-INSENSITIVE searching'))
     ]),
         dbc.Row([
         dash_table.DataTable(
@@ -76,17 +70,11 @@ app.layout = html.Div([
             columns=[{'name': i, 'id': i} for i in dash_columns],
             data=time_df.to_dict('records'),
             style_table={'overflowX': 'auto'},
-            style_header={
-                'backgroundColor': 'rgb(30, 30, 30)',
-                'color': 'white'
-            },
             style_cell={
                 'height': '90',
-                # 'minWidth': '110%',
                 'minWidth': '60px', 'width': '100px', 'maxWidth': '140px',
                 'whiteSpace': 'normal', 'textAlign': 'center',
-                'backgroundColor': 'rgb(0, 0, 0)',
-                'color': 'white'},
+                },
             style_cell_conditional=[{
                 'if': {'column_id': 'Name'},
                 'textAlign': 'center'
@@ -104,73 +92,50 @@ app.layout = html.Div([
         ),
     ]),
         dbc.Row([
+            # Generate the pie chart
             dbc.Col([
                 html.H5("Age/Gender Distribution"),
-
                 dcc.Graph(id='pie-chart'),
-
                 html.P("Names:"),
                 dcc.Dropdown(id='names',
                              options=['Age Group', 'Gender'],
                              value='Age Group',
-                             clearable=False
-                             ),
+                             clearable=False),
 
                 html.P("Values:"),
                 dcc.Dropdown(id='values',
                              options=['Age Place'],
                              value='Age Place',
-                             clearable=False
-                             ),
-            ]),
+                             clearable=False),
+                    ]),
+            # Generate the scatter plot
             dbc.Col([
                 html.H5('Age vs Finish for both Genders'),
-
-                dcc.Graph(
-                    id='graph-with-slider',
-                    # figure=scat
-                ),
+                dcc.Graph(id='graph-with-slider'),
 
                 dcc.Slider(
                     id='scat-place-slider',
                     min=reduced2['Gender Place'].min(),
                     max=200,
                     value=reduced2['Gender Place'].min(),
-                    # marks={str(year): str(year) for year in reduced2['Gender Place'].unique()},
                     step=None,
-                    marks={
-                        10: '10',
-                        25: '25',
-                        50: '50',
-                        100: '100',
-                        200: '200'}
-                ),
-            ]),
-        ]),
-
-        dcc.Graph(
-            id='par-with-slider',
-            # figure=para_cor
-        ),
-
+                    marks={10: '10', 25: '25', 50: '50', 100: '100', 200: '200'}),
+                    ]),
+                ]),
+        # Generate the par-coord plot
+        dcc.Graph(id='par-with-slider'),
+        # Generate the slide for the par-coord plot
         dcc.Slider(
             id='par-place-slider',
             min=reduced2['Gender Place'].min(),
             max=200,
             value=reduced2['Gender Place'].min(),
-            # marks={str(year): str(year) for year in reduced2['Gender Place'].unique()},
             step=None,
-            marks={
-                10: '10',
-                25: '25',
-                50: '50',
-                100: '100',
-                200: '200'
-            }
-        ),
+            marks={10: '10', 25: '25', 50: '50', 100: '100', 200: '200'}
+                ),
                       
     ])
-])
+
         
 @app.callback(
     Output('pie-chart', 'figure'),
