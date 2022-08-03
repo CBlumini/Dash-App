@@ -100,7 +100,7 @@ app.layout = html.Div([
             # dcc.Dropdown(id='places',
             #              options=['Age Place'],
             #              value='Age Place', clearable=False),
-        ],width={'size':1}),
+        ],width={'size':5}),
         # Generate the scatter plot
         dbc.Col([
             html.H5('Age vs Finish for both Genders'),
@@ -113,7 +113,7 @@ app.layout = html.Div([
                 value=reduced2['Gender Place'].min(),
                 step=None,
                 marks={10: '10', 25: '25', 50: '50', 100: '100', 200: '200'}),
-        ],width={'size':1}),
+        ],width={'size':5}),
     ]),
     # Generate the par-coord plot
     dcc.Graph(id='par-with-slider'),
